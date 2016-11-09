@@ -22,7 +22,7 @@ const int PROJ = 6;
 const int SPKR = 8;
 const int AUX = 9;
 const int MON = 10;
-const int PWR_LED = 11;
+const int MAIN_LED = 11;
 const int PROJ_LED = 12;
 
 // Component power vars
@@ -45,6 +45,7 @@ const int EE_LOAD_NUM = 0;
 const int EE_SPRK = 2;
 
 void setup() {
+  Serial.begin(9600);
     // Set i/o states
     pinMode(PWR_BTN, INPUT);
     pinMode(PROJ_BTN, INPUT);
@@ -55,9 +56,9 @@ void setup() {
     pinMode(MON, OUTPUT);
 
     // Setup the timer for LED blinking
-    Timer1::initalize();
-    Timer1::setPeriod(50000);
-    Timer1::attachInterrupt(ISR);
+    Timer1.initialize();
+    Timer1.setPeriod(50000);
+    Timer1.attachInterrupt(blinkCheck);
 
     // If the firmware has just been loaded, save the default speaker state
     if(load_num != EEPROM.read(EE_LOAD_NUM)){
@@ -66,7 +67,7 @@ void setup() {
     }
     // If we haven't, then load the speaker state
     else{
-        sprk_pwr = EEPROM.read(EE_SPRK);
+        spkr_pwr = EEPROM.read(EE_SPRK);
     }
 }
 
@@ -85,6 +86,7 @@ void checkMainBtn(){
         if(!main_is_pressed){
             main_is_pressed = true;
             main_btn_start = millis();
+            Serial.println("Power pressed");
         }
         // Turn on immediately
         if(!main_pwr){
@@ -111,6 +113,7 @@ void checkProjBtn(){
         if(!proj_is_pressed){
             proj_is_pressed = true;
             proj_btn_start = millis();
+            Serial.println("Proj pressed");
         }
         // If the unit is off, start it
         if(!main_pwr){
@@ -131,6 +134,26 @@ void checkProjBtn(){
     }
     else{
         proj_is_pressed = false;
+    }
+}
+
+void setPCPwr(bool pwr_state){
+    // Don't do anything unless chaning state
+    if(pc_pwr == pwr_state){
+        return;
+    }
+    else{
+        pc_pwr = pwr_state;
+        // Projector startup sequence:
+        if(pc_pwr){
+            // Tap button once
+            tapButton(PC);
+        }
+        // Projector shutdown sequence:
+        else{
+            // Long press
+            holdButton(PC, 4000);
+        }
     }
 }
 
@@ -162,12 +185,13 @@ void setProjPwr(bool pwr_state){
     }
 }
 
+
 /*
 *   The interrupt service routine runs every period of the
 *   Timer1 interrupt. This will cause the any enabled LEDs
 *   to blink with a frequency of 1000 / (2*delay_time)
 */
-void ISR(){
+void blinkCheck(){
     int delay_time = 100;
     static long cycle_start = 0;
     static bool blink_state = false;
@@ -175,10 +199,10 @@ void ISR(){
     if(millis() - cycle_start > delay_time){
         blink_state = !blink_state;
         if(main_LED_blink){
-            digitalWrite(MAIN_LED, blink_state)
+            digitalWrite(MAIN_LED, blink_state);
         }
         if(proj_LED_blink){
-            digitalWrite(PROJ_LED, blink_state)
+            digitalWrite(PROJ_LED, blink_state);
         }
         cycle_start = millis();
     }
@@ -202,7 +226,7 @@ void setSpkrPwr(bool pwr_state){
         spkr_pwr = pwr_state;
         tapButton(SPKR);
         // Save the speaker state to restore after power cycle
-        EEPROM::write(sprk_pwr, EE_SPRK);
+        EEPROM.write(spkr_pwr, EE_SPRK);
     }
 }
 
@@ -227,8 +251,14 @@ void tapButton(int pin){
     digitalWrite(pin, LOW);
 }
 
+void holdButton(int pin, int wait){
+  digitalWrite(pin, HIGH);
+  delay(wait);
+  digitalWrite(pin, LOW);
+}
+
 void wait(int time_ms){
-    start_time = millis();
+    long start_time = millis();
     while(millis() - start_time < time_ms){
         // Don't do anything, but don't use
         // delay() so we don't get in the way
