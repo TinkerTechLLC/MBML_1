@@ -9,7 +9,7 @@ projector, but leave the other components on. Holding the main
 power button for 3 seconds will cause the entire unit to power down.
 
 Projector power up: 75 seconds
-Projector power down 90 seconds
+Projector power down 95 seconds
 
 *****************************************/
 
@@ -409,12 +409,11 @@ void tapButton(int pin){
     digitalWrite(pin, LOW);
 }
 
-void holdButton(int pin, int wait){
-  digitalWrite(pin, HIGH);
-  delay(wait);
-  digitalWrite(pin, LOW);
-}
-
+/**
+ * Causes the program to idle without interfering with interrupts.
+ *
+ * @param time_ms How long to idle the program in milliseconds
+ */
 void wait(int time_ms){
     long start_time = millis();
     while(millis() - start_time < time_ms){
