@@ -13,20 +13,23 @@ Projector power down 95 seconds
 
 *****************************************/
 
+#define DEBUG FALSE
+
 // Dependent libraries
 #include <TimerOne.h>
 #include <EEPROM.h>
 
 // Set input / output labels
-const int MAIN_BTN = 3;
-const int PROJ_BTN = 4;
+const int MAIN_BTN = 4;
+const int PROJ_BTN = 3;
 const int PC = 5;
-const int PROJ = 6;
-const int SPKR = 8;
+const int FAN = 6;
+const int SPKR_PWR = 8;
 const int AUX = 9;
 const int MON = 10;
+const int SPKR_SENSE = 11;
 const int MAIN_LED = 12;
-const int PROJ_LED = 11;
+const int PROJ_LED = 13;
 
 // Component power vars
 bool main_pwr = false;
@@ -34,8 +37,9 @@ bool spkr_pwr = false;
 bool mon_pwr = false;
 bool pc_pwr = false;
 bool proj_pwr = false;
+bool fan_pwr = false
 
-int load_num = 1;   // Change this number when re-loading
+int load_num = 2;   // Change this number when re-loading
                     // firmware in reset EEPROM values to defaults
 
 int BTN_HOLD_THRESHOLD = 3000;
@@ -72,31 +76,43 @@ int proj_btn_state;
 
 const int ISR_DELAY = 50000;
 
+// Projector commands
+const char* PROJ_CMD_ON = "\r*pow=on#\r";
+const char* PROJ_CMD_OFF = "\r*pow=off#\r";
+
 void setup() {
-    Serial.begin(9600);
+
+    Serial.begin(115200);   // Baud rate determined by projector interface
+
     // Set i/o states
     pinMode(MAIN_BTN, INPUT);
     pinMode(PROJ_BTN, INPUT);
     pinMode(PC, OUTPUT);
-    pinMode(PROJ, OUTPUT);
-    pinMode(SPKR, OUTPUT);
+    pinMode(FAN, OUTPUT);
+    pinMode(SPKR_PWR, OUTPUT);
     pinMode(AUX, OUTPUT);
     pinMode(MON, OUTPUT);
+    pinMode(SPKR_SENSE, INPUT);
+    pinMode(MAIN_LED, OUTPUT);
+    pinMode(PROJ_LED, OUTPUT);
+
+    // Set all output pins off
+    digitalWrite(PC, LOW);
+    digitalWrite(FAN, LOW);
+    digitalWrite(SPKR_PWR, LOW);
+    digitalWrite(AUX, LOW);
+    digitalWrite(MON, LOW);
+    digitalWrite(MAIN_LED, LOW);
+    digitalWrite(PROJ_LED, LOW);
 
     // Setup the timer for LED blinking
     Timer1.initialize();
     Timer1.setPeriod(ISR_DELAY);
     Timer1.attachInterrupt(LEDCheck);
 
-    // If the firmware has just been loaded, save the default speaker state
-    if(load_num != EEPROM.read(EE_LOAD_NUM)){
-        EEPROM.write(load_num, EE_LOAD_NUM);
-        EEPROM.write(false, EE_SPRK);
-    }
-    // If we haven't, then load the speaker state
-    else{
-        spkr_pwr = EEPROM.read(EE_SPRK);
-    }
+    // Check the phototransistor to see if the speaker's power LED is on
+    // so the spkr_pwr variable is in an accurate initial state
+    spkr_pwr = digitalRead(SPRK_SENSE);
 
     projState(OFF);
     mainState(OFF);
@@ -137,6 +153,7 @@ void handleButtons(){
         }
         projState(STARTUP);
         setProjPwr(true);
+        setFanPwr(true);
     }
     else if(proj_btn_state == HELD){
         if(projState() == ON){
@@ -168,13 +185,16 @@ void handleStates(){
         projState(ON);
     }
     else if(projState() == SHUTDOWN && millis() - proj_off_time > PROJ_SHUTDOWN_TIME){
-        Serial.println("Transitioning from SHUTDOWN to OFF");
-        Serial.print("Cur time: ");
-        Serial.print(millis());
-        Serial.print(" proj_off_time: ");
-        Serial.print(proj_off_time);
-        Serial.print(" elapsed shutdown time: ");
-        Serial.println(millis() - proj_off_time);
+        if(DEBUG){
+            Serial.println("Transitioning from SHUTDOWN to OFF");
+            Serial.print("Cur time: ");
+            Serial.print(millis());
+            Serial.print(" proj_off_time: ");
+            Serial.print(proj_off_time);
+            Serial.print(" elapsed shutdown time: ");
+            Serial.println(millis() - proj_off_time);
+        }
+        setFanPwr(false);
         projState(OFF);
     }
 }
@@ -207,7 +227,9 @@ void checkBtn(int btn_pin){
         btn_press_time = &proj_press_time;
     }
     else{
-        Serial.println("Invalid button check request");
+        if(DEBUG){
+            Serial.println("Invalid button check request");
+        }
         return;
     }
 
@@ -216,20 +238,26 @@ void checkBtn(int btn_pin){
     if(cur_press && !(*btn_last_pressed)){
         *btn_start = millis();
         *btn_last_pressed = true;
-        Serial.println("Setting initial press");
+        if(DEBUG){
+            Serial.println("Setting initial press");
+        }
         *btn_press_time = millis();
     }
     else if(cur_press && *btn_last_pressed){
         if(millis() - *btn_press_time > BTN_HOLD_THRESHOLD){
-            Serial.print("Button held: ");
-            Serial.println(btn_pin);
+            if(DEBUG){
+                Serial.print("Button held: ");
+                Serial.println(btn_pin);
+            }
             *btn_state = HELD;
         }
     }
     else if(!cur_press){
         if(*btn_last_pressed && *btn_state != HELD){
-            Serial.print("Button tapped: ");
-            Serial.println(btn_pin);
+            if(DEBUG){
+                Serial.print("Button tapped: ");
+                Serial.println(btn_pin);
+            }
             *btn_state = TAPPED;
         }
         // Persistent release
@@ -260,6 +288,16 @@ void setPCPwr(bool pwr_state){
     }
 }
 
+void setFanPwr(bool pwr_state){
+    fan_pwr = pwr_state;
+    if(fan_pwr){
+        digitalWrite(FAN, HIGH);
+    }
+    else{
+        digitalWrite(FAN, LOW);
+    }
+}
+
 void setProjPwr(bool pwr_state){
 
     proj_pwr = pwr_state;
@@ -267,19 +305,16 @@ void setProjPwr(bool pwr_state){
     if(proj_pwr){
         proj_on_time = millis();
         // Tap button once
-        tapButton(PROJ);
+        Serial.print(PROJ_CMD_ON);
     }
     // Projector shutdown sequence:
     else{
         proj_off_time = millis();
-        Serial.print("Setting proj off time: ");
-        Serial.println(proj_off_time);
-        // Tap button once
-        tapButton(PROJ);
-        // Wait a second
-        wait(1000);
-        // Tap the power button again to confirm
-        tapButton(PROJ);
+        if(DEBUG){
+            Serial.print("Setting proj off time: ");
+            Serial.println(proj_off_time);
+        }
+        Serial.print(PROJ_CMD_OFF);
     }
 }
 
@@ -304,7 +339,7 @@ void setMainPwr(bool pwr_state){
 
 /*
 *   The interrupt service routine runs every period of the
-*   Timer1 interrupt. This will cause the any enabled LEDs
+*   Timer1 interrupt. This will cause any enabled LEDs
 *   to blink with a frequency of 1000 / (2*delay_time)
 */
 void LEDCheck(){
@@ -394,12 +429,6 @@ void setSpkrPwr(bool pwr_state){
     else{
         spkr_pwr = pwr_state;
         tapButton(SPKR);
-        // Save the speaker state to restore after power cycle
-        EEPROM.write(spkr_pwr, EE_SPRK);
-        // Verify EEPROM
-        bool test = EEPROM.read(EE_SPRK);
-        Serial.print("EEPROM state: ");
-        Serial.println(test);
     }
 }
 
@@ -425,7 +454,9 @@ void wait(int time_ms){
 
 void mainState(int state){
     main_state = state;
-    Serial.print("Main state: ");
+    if(DEBUG){
+        Serial.print("Main state: ");
+    }
     printState(state);
 }
 
@@ -435,7 +466,9 @@ int mainState(){
 
 void projState(int state){
     proj_state = state;
-    Serial.print("Proj state: ");
+    if(DEBUG){
+        Serial.print("Proj state: ");
+    }
     printState(state);
 }
 
@@ -444,6 +477,9 @@ int projState(){
 }
 
 void printState(int state){
+    if(!DEBUG){
+        return;
+    }
     switch (state) {
         case OFF:
         Serial.println("OFF");
