@@ -62,6 +62,7 @@ const long MAIN_SHUTDOWN_TIME = 10000;
 
 int main_state;
 int proj_state;
+int blank_active;
 
 #define RELEASED        0
 #define TAPPED          1
@@ -69,12 +70,15 @@ int proj_state;
 
 int main_btn_state;
 int proj_btn_state;
+bool blank_btn_state;
 
 const int ISR_DELAY = 50000;
 
 // Projector commands
 const char* PROJ_CMD_ON        = "\r*pow=on#\r";
 const char* PROJ_CMD_OFF       = "\r*pow=off#\r";
+const char* PROJ_CMD_BLANK_ON  = "\r*blank=on#\r";
+const char* PROJ_CMD_BLANK_OFF = "\r*blank=on#\r";
 void setup() {
 
     Serial.begin(115200);   // Baud rate determined by projector interface
@@ -90,6 +94,7 @@ void setup() {
     pinMode(SPKR_SENSE, INPUT);
     pinMode(MAIN_LED, OUTPUT);
     pinMode(PROJ_LED, OUTPUT);
+    pinMode(BLANK_BTN, INPUT);
 
     // Set all output pins off
     digitalWrite(PC, LOW);
@@ -111,14 +116,18 @@ void setup() {
 
     projState(OFF);
     mainState(OFF);
-    main_btn_state = RELEASED;
-    proj_btn_state = RELEASED;
+    main_btn_state  = RELEASED;
+    proj_btn_state  = RELEASED;
+    blank_btn_state = RELEASED;
+
+    blank_active = false;
 }
 
 void loop() {
     // Monitor the button states
     checkBtn(MAIN_BTN);
     checkBtn(PROJ_BTN);
+    checkBtn(BLANK_BTN);
     delay(10);
     handleButtons();
     handleStates();
@@ -157,6 +166,15 @@ void handleButtons(){
         }
         else if(projState() == STARTUP){
             projState(STARTUP_DWN);
+        }
+    }
+    else if(blank_btn_state == TAPPED){
+        blank_active = !blank_active;
+        if(blank_active){
+            Serial.print(PROJ_CMD_BLANK_ON);
+        }
+        else{
+            Serial.print(PROJ_CMD_BLANK_OFF);
         }
     }
 }
@@ -198,11 +216,14 @@ void checkBtn(int btn_pin){
 
     static long main_start = 0;
     static long proj_start = 0;
+    static long blank_start = 0;
     static bool main_last_pressed = false;
     static bool proj_last_pressed = false;
+    static bool blank_last_pressed = false;
     const int DEBOUNCE = 50;
     static long main_press_time = -1;
     static long proj_press_time = -1;
+    static long blank_press_time = -1;
 
     long* btn_start;
     bool* btn_last_pressed;
@@ -220,6 +241,12 @@ void checkBtn(int btn_pin){
         btn_last_pressed = &proj_last_pressed;
         btn_state = &proj_btn_state;
         btn_press_time = &proj_press_time;
+    }
+    else if(btn_pin == BLANK_BTN){
+        btn_start = &blank_start;
+        btn_last_pressed = &blank_last_pressed;
+        btn_state = &blank_btn_state;
+        btn_press_time = &blank_press_time;
     }
     else{
         if(DEBUG){
