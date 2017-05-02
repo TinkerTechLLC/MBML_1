@@ -13,7 +13,7 @@ Projector power down 95 seconds
 
 *****************************************/
 
-#define DEBUG FALSE
+#define DEBUG false
 
 // Dependent libraries
 #include <TimerOne.h>
@@ -37,7 +37,7 @@ bool spkr_pwr = false;
 bool mon_pwr = false;
 bool pc_pwr = false;
 bool proj_pwr = false;
-bool fan_pwr = false
+bool fan_pwr = false;
 
 int load_num = 2;   // Change this number when re-loading
                     // firmware in reset EEPROM values to defaults
@@ -112,7 +112,7 @@ void setup() {
 
     // Check the phototransistor to see if the speaker's power LED is on
     // so the spkr_pwr variable is in an accurate initial state
-    spkr_pwr = digitalRead(SPRK_SENSE);
+    spkr_pwr = digitalRead(SPKR_SENSE);
 
     projState(OFF);
     mainState(OFF);
@@ -428,7 +428,7 @@ void setSpkrPwr(bool pwr_state){
     }
     else{
         spkr_pwr = pwr_state;
-        tapButton(SPKR);
+        tapButton(SPKR_PWR);
     }
 }
 
