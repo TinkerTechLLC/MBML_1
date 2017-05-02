@@ -62,7 +62,7 @@ const long MAIN_SHUTDOWN_TIME = 10000;
 
 int main_state;
 int proj_state;
-int blank_active;
+bool blank_active;
 
 #define RELEASED        0
 #define TAPPED          1
@@ -70,7 +70,7 @@ int blank_active;
 
 int main_btn_state;
 int proj_btn_state;
-bool blank_btn_state;
+int blank_btn_state;
 
 const int ISR_DELAY = 50000;
 
