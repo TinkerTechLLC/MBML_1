@@ -30,7 +30,7 @@ Projector power down 95 seconds
 #define SPKR_SENSE  11
 #define MAIN_LED    12
 #define PROJ_LED    13
-#define BLANK       A7
+#define BLANK_BTN   A7
 
 // Component power vars
 bool main_pwr   = false;
@@ -48,16 +48,15 @@ int BTN_HOLD_THRESHOLD = 3000;
 // EEPROM Addresses
 const int EE_LOAD_NUM   = 0;
 const int EE_SPRK       = 2;
+long proj_on_time             = 0;
+long proj_off_time            = 0;
+const long PROJ_STARTUP_TIME  = 75000;
+const long PROJ_SHUTDOWN_TIME = 95000;
 
-long proj_on_time       = 0;
-long proj_off_time      = 0;
-long PROJ_STARTUP_TIME  = 75000;
-long PROJ_SHUTDOWN_TIME = 95000;
-
-long main_on_time       = 0;
-long main_off_time      = 0;
-long MAIN_STARTUP_TIME  = 20000;
-long MAIN_SHUTDOWN_TIME = 10000;
+long main_on_time             = 0;
+long main_off_time            = 0;
+const long MAIN_STARTUP_TIME  = 20000;
+const long MAIN_SHUTDOWN_TIME = 10000;
 
 #define OFF            -1
 #define ON              0
