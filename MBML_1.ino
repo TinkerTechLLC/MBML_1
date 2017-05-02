@@ -17,7 +17,6 @@ Projector power down 95 seconds
 
 // Dependent libraries
 #include <TimerOne.h>
-#include <EEPROM.h>
 
 // Set input / output labels
 #define MAIN_BTN    4
