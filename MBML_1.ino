@@ -20,16 +20,17 @@ Projector power down 95 seconds
 #include <EEPROM.h>
 
 // Set input / output labels
-const int MAIN_BTN = 4;
-const int PROJ_BTN = 3;
-const int PC = 5;
-const int FAN = 6;
-const int SPKR_PWR = 8;
-const int AUX = 9;
-const int MON = 10;
-const int SPKR_SENSE = 11;
-const int MAIN_LED = 12;
-const int PROJ_LED = 13;
+#define MAIN_BTN    4
+#define ROJ_BTN     3
+#define PC          5
+#define FAN         6
+#define SPKR_PWR    8
+#define AUX         9
+#define MON         10
+#define SPKR_SENSE  11
+#define MAIN_LED    12
+#define PROJ_LED    13
+#define BLANK       A7
 
 // Component power vars
 bool main_pwr = false;
