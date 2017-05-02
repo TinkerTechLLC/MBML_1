@@ -21,7 +21,7 @@ Projector power down 95 seconds
 
 // Set input / output labels
 #define MAIN_BTN    4
-#define ROJ_BTN     3
+#define PROJ_BTN    3
 #define PC          5
 #define FAN         6
 #define SPKR_PWR    8
@@ -211,7 +211,7 @@ void checkBtn(int btn_pin){
 
     long* btn_start;
     bool* btn_last_pressed;
-    int* btn_state;
+    int*  btn_state;
     long* btn_press_time;
 
     if(btn_pin == MAIN_BTN){
