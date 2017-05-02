@@ -45,9 +45,6 @@ int load_num    = 2;   // Change this number when re-loading
 
 int BTN_HOLD_THRESHOLD        = 3000;   // Time to register as button hold in ms
 
-// EEPROM Addresses
-const int EE_LOAD_NUM   = 0;
-const int EE_SPRK       = 2;
 long proj_on_time             = 0;
 long proj_off_time            = 0;
 const long PROJ_STARTUP_TIME  = 75000;
