@@ -33,44 +33,44 @@ Projector power down 95 seconds
 #define BLANK       A7
 
 // Component power vars
-bool main_pwr = false;
-bool spkr_pwr = false;
-bool mon_pwr = false;
-bool pc_pwr = false;
-bool proj_pwr = false;
-bool fan_pwr = false;
+bool main_pwr   = false;
+bool spkr_pwr   = false;
+bool mon_pwr    = false;
+bool pc_pwr     = false;
+bool proj_pwr   = false;
+bool fan_pwr    = false;
 
-int load_num = 2;   // Change this number when re-loading
-                    // firmware in reset EEPROM values to defaults
+int load_num    = 2;   // Change this number when re-loading
+                       // firmware in reset EEPROM values to defaults
 
 int BTN_HOLD_THRESHOLD = 3000;
 
 // EEPROM Addresses
-const int EE_LOAD_NUM = 0;
-const int EE_SPRK = 2;
+const int EE_LOAD_NUM   = 0;
+const int EE_SPRK       = 2;
 
-long proj_on_time = 0;
-long proj_off_time = 0;
-long PROJ_STARTUP_TIME = 75000;
+long proj_on_time       = 0;
+long proj_off_time      = 0;
+long PROJ_STARTUP_TIME  = 75000;
 long PROJ_SHUTDOWN_TIME = 95000;
 
-long main_on_time = 0;
-long main_off_time = 0;
-long MAIN_STARTUP_TIME = 20000;
+long main_on_time       = 0;
+long main_off_time      = 0;
+long MAIN_STARTUP_TIME  = 20000;
 long MAIN_SHUTDOWN_TIME = 10000;
 
-#define OFF -1
-#define ON 0
-#define STARTUP 1
-#define SHUTDOWN 2
-#define STARTUP_DWN 3   // In startup mode, but shutdown is scheduled
+#define OFF            -1
+#define ON              0
+#define STARTUP         1
+#define SHUTDOWN        2
+#define STARTUP_DWN     3   // In startup mode, but shutdown is scheduled
 
 int main_state;
 int proj_state;
 
-#define RELEASED 0
-#define TAPPED 1
-#define HELD 2
+#define RELEASED        0
+#define TAPPED          1
+#define HELD            2
 
 int main_btn_state;
 int proj_btn_state;
