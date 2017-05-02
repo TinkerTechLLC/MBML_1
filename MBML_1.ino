@@ -43,7 +43,7 @@ bool fan_pwr    = false;
 int load_num    = 2;   // Change this number when re-loading
                        // firmware in reset EEPROM values to defaults
 
-int BTN_HOLD_THRESHOLD = 3000;
+int BTN_HOLD_THRESHOLD        = 3000;   // Time to register as button hold in ms
 
 // EEPROM Addresses
 const int EE_LOAD_NUM   = 0;
