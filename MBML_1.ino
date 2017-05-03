@@ -78,7 +78,7 @@ const int ISR_DELAY = 50000;
 const char* PROJ_CMD_ON        = "\r*pow=on#\r";
 const char* PROJ_CMD_OFF       = "\r*pow=off#\r";
 const char* PROJ_CMD_BLANK_ON  = "\r*blank=on#\r";
-const char* PROJ_CMD_BLANK_OFF = "\r*blank=on#\r";
+const char* PROJ_CMD_BLANK_OFF = "\r*blank=off#\r";
 void setup() {
 
     Serial.begin(115200);   // Baud rate determined by projector interface
