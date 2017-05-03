@@ -111,8 +111,9 @@ void setup() {
     Timer1.attachInterrupt(LEDCheck);
 
     // Check the phototransistor to see if the speaker's power LED is on
-    // so the spkr_pwr variable is in an accurate initial state
-    spkr_pwr = digitalRead(SPKR_SENSE);
+    // so the spkr_pwr variable is in an accurate initial state. Sensor is
+    // active low
+    spkr_pwr = !digitalRead(SPKR_SENSE);
 
     projState(OFF);
     mainState(OFF);
