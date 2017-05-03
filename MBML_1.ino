@@ -29,7 +29,7 @@ Projector power down 95 seconds
 #define SPKR_SENSE  11
 #define MAIN_LED    12
 #define PROJ_LED    13
-#define BLANK_BTN   A7
+#define BLANK_BTN   A5
 
 // Component power vars
 bool main_pwr   = false;
