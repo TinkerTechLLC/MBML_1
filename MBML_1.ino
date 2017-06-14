@@ -46,7 +46,7 @@ Projector power down 95 seconds
 
 #define MAIN_STARTUP_TIME   20000
 #define MAIN_SHUTDOWN_TIME  10000
-#define ROJ_STARTUP_TIME    75000
+#define PROJ_STARTUP_TIME   75000
 #define PROJ_SHUTDOWN_TIME  95000
 
 #define ISR_DELAY           50000
