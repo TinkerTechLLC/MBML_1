@@ -13,23 +13,58 @@ Projector power down 95 seconds
 
 *****************************************/
 
-#define DEBUG false
+/*****************************************
+           Dependent Libraries
+*****************************************/
 
-// Dependent libraries
 #include <TimerOne.h>
+
+/*****************************************
+                #defines
+*****************************************/
+
+#define DEBUG false
+#define ONE_SECOND 1000 // One second in milliseconds
+
+// #define SENSOR_TEST
+// #define GPIO_TEST
+// #define PROJ_TEST
 
 // Set input / output labels
 #define MAIN_BTN    4
 #define PROJ_BTN    3
-#define PC          5
-#define FAN         6
+#define PC          9
+#define AUX_1       6
 #define SPKR_PWR    8
-#define AUX         9
+#define AUX_2       5
 #define MON         10
 #define SPKR_SENSE  11
 #define MAIN_LED    12
 #define PROJ_LED    13
-#define BLANK_BTN   A5
+#define BLANK_BTN   A3
+#define FAN_PWR     A4
+
+#define MAIN_STARTUP_TIME   20000
+#define MAIN_SHUTDOWN_TIME  10000
+#define ROJ_STARTUP_TIME    75000
+#define PROJ_SHUTDOWN_TIME  95000
+
+#define ISR_DELAY           50000
+#define BTN_HOLD_THRESHOLD  3000    // Time to register as button hold in ms
+
+#define OFF                -1
+#define ON                  0
+#define STARTUP             1
+#define SHUTDOWN            2
+#define STARTUP_DWN         3   // In startup mode, but shutdown is scheduled
+
+#define RELEASED            0
+#define TAPPED              1
+#define HELD                2
+
+/*****************************************
+            Global Variables
+*****************************************/
 
 // Component power vars
 bool main_pwr   = false;
@@ -42,43 +77,30 @@ bool fan_pwr    = false;
 int load_num    = 2;   // Change this number when re-loading
                        // firmware in reset EEPROM values to defaults
 
-int BTN_HOLD_THRESHOLD        = 3000;   // Time to register as button hold in ms
+long proj_on_time      = 0;
+long proj_off_time     = 0;
 
-long proj_on_time             = 0;
-long proj_off_time            = 0;
-const long PROJ_STARTUP_TIME  = 75000;
-const long PROJ_SHUTDOWN_TIME = 95000;
-
-long main_on_time             = 0;
-long main_off_time            = 0;
-const long MAIN_STARTUP_TIME  = 20000;
-const long MAIN_SHUTDOWN_TIME = 10000;
-
-#define OFF            -1
-#define ON              0
-#define STARTUP         1
-#define SHUTDOWN        2
-#define STARTUP_DWN     3   // In startup mode, but shutdown is scheduled
+long main_on_time      = 0;
+long main_off_time     = 0;
 
 int main_state;
 int proj_state;
 bool blank_active;
 
-#define RELEASED        0
-#define TAPPED          1
-#define HELD            2
-
 int main_btn_state;
 int proj_btn_state;
 int blank_btn_state;
-
-const int ISR_DELAY = 50000;
 
 // Projector commands
 const char* PROJ_CMD_ON        = "\r*pow=on#\r";
 const char* PROJ_CMD_OFF       = "\r*pow=off#\r";
 const char* PROJ_CMD_BLANK_ON  = "\r*blank=on#\r";
 const char* PROJ_CMD_BLANK_OFF = "\r*blank=off#\r";
+
+/*****************************************
+                Functions
+*****************************************/
+
 void setup() {
 
     Serial.begin(115200);   // Baud rate determined by projector interface
@@ -87,9 +109,10 @@ void setup() {
     pinMode(MAIN_BTN, INPUT);
     pinMode(PROJ_BTN, INPUT);
     pinMode(PC, OUTPUT);
-    pinMode(FAN, OUTPUT);
+    pinMode(FAN_PWR, OUTPUT);
     pinMode(SPKR_PWR, OUTPUT);
-    pinMode(AUX, OUTPUT);
+    pinMode(AUX_1, OUTPUT);
+    pinMode(AUX_2, OUTPUT);
     pinMode(MON, OUTPUT);
     pinMode(SPKR_SENSE, INPUT);
     pinMode(MAIN_LED, OUTPUT);
@@ -98,12 +121,36 @@ void setup() {
 
     // Set all output pins off
     digitalWrite(PC, LOW);
-    digitalWrite(FAN, LOW);
+    digitalWrite(FAN_PWR, LOW);
     digitalWrite(SPKR_PWR, LOW);
-    digitalWrite(AUX, LOW);
+    digitalWrite(AUX_1, LOW);
+    digitalWrite(AUX_2, LOW);
     digitalWrite(MON, LOW);
     digitalWrite(MAIN_LED, LOW);
     digitalWrite(PROJ_LED, LOW);
+
+    digitalWrite(PC, HIGH);
+    digitalWrite(FAN_PWR, HIGH);
+    digitalWrite(SPKR_PWR, HIGH);
+    digitalWrite(AUX_1, HIGH);
+    digitalWrite(AUX_2, HIGH);
+    digitalWrite(MON, HIGH);
+    digitalWrite(MAIN_LED, HIGH);
+    digitalWrite(PROJ_LED, HIGH);
+
+// If a test mode is defined, the program will jump to that sub-loop here
+// and the main loop will not run
+#ifdef SENSOR_TEST
+    runSensorTest();
+#endif
+
+#ifdef GPIO_TEST
+    runGPIOTest();
+#endif
+
+#ifdef PROJ_TEST
+    runProjTest();
+#endif
 
     // Setup the timer for LED blinking
     Timer1.initialize();
@@ -129,9 +176,67 @@ void loop() {
     checkBtn(MAIN_BTN);
     checkBtn(PROJ_BTN);
     checkBtn(BLANK_BTN);
-    delay(10);
+    wait(10);
     handleButtons();
     handleStates();
+}
+
+void runGPIOTest(){
+    while(1){
+        if(!digitalRead(MAIN_BTN)){
+            digitalWrite(MAIN_LED, LOW);
+        }
+        else if(!digitalRead(PROJ_BTN)){
+            digitalWrite(PROJ_LED, LOW);
+        }
+        else if(!digitalRead(BLANK_BTN)){
+            digitalWrite(MON, LOW);
+        }
+        else if(!digitalRead(SPKR_SENSE)){
+            for(int i = 0; i < 5; i++){
+                digitalWrite(MAIN_LED, LOW);
+                wait(50);
+                digitalWrite(MAIN_LED, HIGH);
+            }
+        }
+        else{
+            digitalWrite(MAIN_LED, HIGH);
+            digitalWrite(PROJ_LED, HIGH);
+            digitalWrite(MON, HIGH);
+        }
+        wait(100);
+    }
+}
+
+void runProjTest(){
+    while(1){
+        wait(2000);
+        for(int i = 0; i < 5; i++){
+          digitalWrite(13, LOW);
+          wait(200);
+          digitalWrite(13, HIGH);
+        }
+        Serial.print(PROJ_CMD_ON);
+        wait(75000);
+        digitalWrite(13, LOW);
+        Serial.print(PROJ_CMD_OFF);
+        wait(95000);
+    }
+}
+
+void runSensorTest(){
+    while(1){
+        long start_time = millis();
+        while(millis() - start_time < ONE_SECOND)
+
+
+        if(!digitalRead(SPKR_SENSE)){
+            digitalWrite(MON, HIGH);
+        }
+        else{
+            digitalWrite(MON, LOW);
+        }
+    }
 }
 
 void handleButtons(){
@@ -215,16 +320,16 @@ void handleStates(){
 
 void checkBtn(int btn_pin){
 
-    static long main_start = 0;
-    static long proj_start = 0;
-    static long blank_start = 0;
-    static bool main_last_pressed = false;
-    static bool proj_last_pressed = false;
-    static bool blank_last_pressed = false;
-    const int DEBOUNCE = 50;
-    static long main_press_time = -1;
-    static long proj_press_time = -1;
-    static long blank_press_time = -1;
+    static long main_start          = 0;
+    static long proj_start          = 0;
+    static long blank_start         = 0;
+    static bool main_last_pressed   = false;
+    static bool proj_last_pressed   = false;
+    static bool blank_last_pressed  = false;
+    const int DEBOUNCE              = 50;
+    static long main_press_time     = -1;
+    static long proj_press_time     = -1;
+    static long blank_press_time    = -1;
 
     long* btn_start;
     bool* btn_last_pressed;
@@ -232,22 +337,22 @@ void checkBtn(int btn_pin){
     long* btn_press_time;
 
     if(btn_pin == MAIN_BTN){
-        btn_start = &main_start;
-        btn_last_pressed = &main_last_pressed;
-        btn_state = &main_btn_state;
-        btn_press_time = &main_press_time;
+        btn_start           = &main_start;
+        btn_last_pressed    = &main_last_pressed;
+        btn_state           = &main_btn_state;
+        btn_press_time      = &main_press_time;
     }
     else if(btn_pin == PROJ_BTN){
-        btn_start = &proj_start;
-        btn_last_pressed = &proj_last_pressed;
-        btn_state = &proj_btn_state;
-        btn_press_time = &proj_press_time;
+        btn_start           = &proj_start;
+        btn_last_pressed    = &proj_last_pressed;
+        btn_state           = &proj_btn_state;
+        btn_press_time      = &proj_press_time;
     }
     else if(btn_pin == BLANK_BTN){
-        btn_start = &blank_start;
-        btn_last_pressed = &blank_last_pressed;
-        btn_state = &blank_btn_state;
-        btn_press_time = &blank_press_time;
+        btn_start           = &blank_start;
+        btn_last_pressed    = &blank_last_pressed;
+        btn_state           = &blank_btn_state;
+        btn_press_time      = &blank_press_time;
     }
     else{
         if(DEBUG){
@@ -314,10 +419,10 @@ void setPCPwr(bool pwr_state){
 void setFanPwr(bool pwr_state){
     fan_pwr = pwr_state;
     if(fan_pwr){
-        digitalWrite(FAN, HIGH);
+        digitalWrite(FAN_PWR, HIGH);
     }
     else{
-        digitalWrite(FAN, LOW);
+        digitalWrite(FAN_PWR, LOW);
     }
 }
 
@@ -457,7 +562,7 @@ void setSpkrPwr(bool pwr_state){
 
 void tapButton(int pin){
     digitalWrite(pin, HIGH);
-    delay(200);
+    wait(200);
     digitalWrite(pin, LOW);
 }
 
