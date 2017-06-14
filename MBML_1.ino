@@ -129,15 +129,6 @@ void setup() {
     digitalWrite(MAIN_LED, LOW);
     digitalWrite(PROJ_LED, LOW);
 
-    digitalWrite(PC, HIGH);
-    digitalWrite(FAN_PWR, HIGH);
-    digitalWrite(SPKR_PWR, HIGH);
-    digitalWrite(AUX_1, HIGH);
-    digitalWrite(AUX_2, HIGH);
-    digitalWrite(MON, HIGH);
-    digitalWrite(MAIN_LED, HIGH);
-    digitalWrite(PROJ_LED, HIGH);
-
 // If a test mode is defined, the program will jump to that sub-loop here
 // and the main loop will not run
 #ifdef SENSOR_TEST
@@ -182,6 +173,16 @@ void loop() {
 }
 
 void runGPIOTest(){
+  
+    digitalWrite(PC, HIGH);
+    digitalWrite(FAN_PWR, HIGH);
+    digitalWrite(SPKR_PWR, HIGH);
+    digitalWrite(AUX_1, HIGH);
+    digitalWrite(AUX_2, HIGH);
+    digitalWrite(MON, HIGH);
+    digitalWrite(MAIN_LED, HIGH);
+    digitalWrite(PROJ_LED, HIGH);
+    
     while(1){
         if(!digitalRead(MAIN_BTN)){
             digitalWrite(MAIN_LED, LOW);
