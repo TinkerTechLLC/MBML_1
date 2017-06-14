@@ -228,15 +228,25 @@ void runProjTest(){
 void runSensorTest(){
     while(1){
         long start_time = millis();
-        while(millis() - start_time < ONE_SECOND)
+        bool speaker_on = false;
 
-
-        if(!digitalRead(SPKR_SENSE)){
+        // If the speaker light is on at any time during the one second of
+        // checking, it is on. We need to do it this way because if the speaker
+        // is not connected to a Bluetooth device, its BT light will blink, so
+        // the sensor could potentially be read while it is off.
+        while(millis() - start_time < ONE_SECOND){
+            if(!digitalRead(SPKR_SENSE)){   // Sensor active low
+                speaker_on = true;
+            }
+            wait(10);
+        }
+        if(speaker_on){
             digitalWrite(MON, HIGH);
         }
         else{
             digitalWrite(MON, LOW);
         }
+        wait(1000);
     }
 }
 
