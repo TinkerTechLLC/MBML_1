@@ -26,23 +26,50 @@ Projector power down 95 seconds
 #define DEBUG false
 #define ONE_SECOND 1000 // One second in milliseconds
 
+
+// Un-comment one of the below #defines to run that test routine instead
+// of the normal program.
+
 // #define SENSOR_TEST
 // #define GPIO_TEST
 // #define PROJ_TEST
 
-// Set input / output labels
-#define MAIN_BTN    4
-#define PROJ_BTN    3
-#define PC          9
-#define AUX_1       6
-#define SPKR_PWR    8
-#define AUX_2       5
-#define MON         10
-#define SPKR_SENSE  11
-#define MAIN_LED    12
-#define PROJ_LED    13
-#define BLANK_BTN   A3
-#define FAN_PWR     A4
+
+// Set the board version in order to set the correct pin labels
+
+// #define V2_0
+#define V2_1
+
+// Set input / output pin labels
+#ifdef V2_0
+    #define MAIN_BTN    4
+    #define PROJ_BTN    3
+    #define PC          5
+    #define AUX_1       9
+    #define SPKR_PWR    8
+    #define AUX_2       A0
+    #define MON         10
+    #define SPKR_SENSE  11
+    #define MAIN_LED    12
+    #define PROJ_LED    13
+    #define BLANK_BTN   A5
+    #define FAN_PWR     6
+#endif
+
+#ifdef V2_1
+    #define MAIN_BTN    4
+    #define PROJ_BTN    3
+    #define PC          9
+    #define AUX_1       6
+    #define SPKR_PWR    8
+    #define AUX_2       5
+    #define MON         10
+    #define SPKR_SENSE  11
+    #define MAIN_LED    12
+    #define PROJ_LED    13
+    #define BLANK_BTN   A3
+    #define FAN_PWR     A4
+#endif
 
 #define MAIN_STARTUP_TIME   20000
 #define MAIN_SHUTDOWN_TIME  10000
@@ -173,7 +200,7 @@ void loop() {
 }
 
 void runGPIOTest(){
-  
+
     digitalWrite(PC, HIGH);
     digitalWrite(FAN_PWR, HIGH);
     digitalWrite(SPKR_PWR, HIGH);
@@ -182,7 +209,7 @@ void runGPIOTest(){
     digitalWrite(MON, HIGH);
     digitalWrite(MAIN_LED, HIGH);
     digitalWrite(PROJ_LED, HIGH);
-    
+
     while(1){
         if(!digitalRead(MAIN_BTN)){
             digitalWrite(MAIN_LED, LOW);
