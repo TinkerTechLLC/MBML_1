@@ -178,7 +178,7 @@ void setup() {
     // Check the phototransistor to see if the speaker's power LED is on
     // so the spkr_pwr variable is in an accurate initial state. Sensor is
     // active low
-    spkr_pwr = !digitalRead(SPKR_SENSE);
+    spkr_pwr = checkSpeakerState();
 
     projState(OFF);
     mainState(OFF);
@@ -252,21 +252,25 @@ void runProjTest(){
     }
 }
 
+bool checkSpeakerState(){
+    long start_time = millis();
+    bool speaker_on = false;
+    while(millis() - start_time < ONE_SECOND){
+        if(!digitalRead(SPKR_SENSE)){   // Sensor active low
+            speaker_on = true;
+        }
+        wait(10);
+    }
+    return speaker_on;
+}
+
 void runSensorTest(){
     while(1){
-        long start_time = millis();
-        bool speaker_on = false;
-
         // If the speaker light is on at any time during the one second of
         // checking, it is on. We need to do it this way because if the speaker
         // is not connected to a Bluetooth device, its BT light will blink, so
         // the sensor could potentially be read while it is off.
-        while(millis() - start_time < ONE_SECOND){
-            if(!digitalRead(SPKR_SENSE)){   // Sensor active low
-                speaker_on = true;
-            }
-            wait(10);
-        }
+        bool speaker_on = checkSpeakerState();
         if(speaker_on){
             digitalWrite(MON, HIGH);
         }
@@ -600,7 +604,7 @@ void setSpkrPwr(bool pwr_state){
 
 void tapButton(int pin){
     digitalWrite(pin, HIGH);
-    wait(200);
+    wait(500);
     digitalWrite(pin, LOW);
 }
 
