@@ -201,54 +201,56 @@ void loop() {
 
 void runGPIOTest(){
 
-    digitalWrite(PC, HIGH);
-    digitalWrite(FAN_PWR, HIGH);
-    digitalWrite(SPKR_PWR, HIGH);
-    digitalWrite(AUX_1, HIGH);
-    digitalWrite(AUX_2, HIGH);
-    digitalWrite(MON, HIGH);
-    digitalWrite(MAIN_LED, HIGH);
-    digitalWrite(PROJ_LED, HIGH);
+    digitalWrite(PC, LOW);
+    digitalWrite(FAN_PWR, LOW);
+    digitalWrite(MON, LOW);
+    digitalWrite(MAIN_LED, LOW);
+    digitalWrite(PROJ_LED, LOW);
 
     while(1){
-        if(!digitalRead(MAIN_BTN)){
-            digitalWrite(MAIN_LED, LOW);
+        if(!digitalRead(MAIN_BTN) && !digitalRead(PROJ_BTN)){
+          digitalWrite(FAN_PWR, HIGH);
+        }
+        else if(!digitalRead(MAIN_BTN)){
+            digitalWrite(MAIN_LED, HIGH);
         }
         else if(!digitalRead(PROJ_BTN)){
-            digitalWrite(PROJ_LED, LOW);
+            digitalWrite(PROJ_LED, HIGH);
         }
         else if(!digitalRead(BLANK_BTN)){
-            digitalWrite(MON, LOW);
-        }
-        else if(!digitalRead(SPKR_SENSE)){
-            for(int i = 0; i < 5; i++){
-                digitalWrite(MAIN_LED, LOW);
-                wait(50);
-                digitalWrite(MAIN_LED, HIGH);
-            }
+            digitalWrite(MON, HIGH);
         }
         else{
-            digitalWrite(MAIN_LED, HIGH);
-            digitalWrite(PROJ_LED, HIGH);
-            digitalWrite(MON, HIGH);
+            digitalWrite(MAIN_LED, LOW);
+            digitalWrite(PROJ_LED, LOW);
+            digitalWrite(MON, LOW);
+            digitalWrite(FAN_PWR, LOW);
         }
         wait(100);
     }
 }
 
 void runProjTest(){
+
+    wait(2000);
+    for(int i = 0; i < 5; i++){
+      digitalWrite(13, LOW);
+      wait(200);
+      digitalWrite(13, HIGH);
+    }
     while(1){
-        wait(2000);
-        for(int i = 0; i < 5; i++){
-          digitalWrite(13, LOW);
-          wait(200);
-          digitalWrite(13, HIGH);
-        }
+      if(!digitalRead(MAIN_BTN)){
         Serial.print(PROJ_CMD_ON);
-        wait(75000);
-        digitalWrite(13, LOW);
+        //wait(75000);
+//        wait(2000);
+        //digitalWrite(13, LOW);
+        //wait(2000);
+        //wait(95000);
+      }
+      else if (!digitalRead(PROJ_BTN)){
         Serial.print(PROJ_CMD_OFF);
-        wait(95000);
+      }
+      wait(500);
     }
 }
 
@@ -272,12 +274,12 @@ void runSensorTest(){
         // the sensor could potentially be read while it is off.
         bool speaker_on = checkSpeakerState();
         if(speaker_on){
-            digitalWrite(MON, HIGH);
+            digitalWrite(MAIN_LED, HIGH);
         }
         else{
-            digitalWrite(MON, LOW);
+            digitalWrite(MAIN_LED, LOW);
         }
-        wait(1000);
+        wait(10);
     }
 }
 
