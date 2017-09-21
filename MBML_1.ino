@@ -95,7 +95,6 @@ Projector power down 95 seconds
 
 // Component power vars
 bool main_pwr   = false;
-bool spkr_pwr   = false;
 bool mon_pwr    = false;
 bool pc_pwr     = false;
 bool proj_pwr   = false;
@@ -175,11 +174,6 @@ void setup() {
     Timer1.setPeriod(ISR_DELAY);
     Timer1.attachInterrupt(LEDCheck);
 
-    // Check the phototransistor to see if the speaker's power LED is on
-    // so the spkr_pwr variable is in an accurate initial state. Sensor is
-    // active low
-    spkr_pwr = checkSpeakerState();
-
     projState(OFF);
     mainState(OFF);
     main_btn_state  = RELEASED;
@@ -257,11 +251,8 @@ void runProjTest(){
 bool checkSpeakerState(){
     long start_time = millis();
     bool speaker_on = false;
-    while(millis() - start_time < ONE_SECOND){
-        if(!digitalRead(SPKR_SENSE)){   // Sensor active low
-            speaker_on = true;
-        }
-        wait(10);
+    if(!digitalRead(SPKR_SENSE)){   // Sensor active low
+        speaker_on = true;
     }
     return speaker_on;
 }
@@ -595,11 +586,11 @@ void setMonPwr(bool pwr_state){
 }
 
 void setSpkrPwr(bool pwr_state){
-    if(spkr_pwr == pwr_state){
+    bool spkr_on = checkSpeakerState();
+    if(spkr_on == pwr_state){
         return;
     }
     else{
-        spkr_pwr = pwr_state;
         tapButton(SPKR_PWR);
     }
 }
