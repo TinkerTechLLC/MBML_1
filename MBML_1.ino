@@ -191,6 +191,7 @@ void loop() {
     wait(10);
     handleButtons();
     handleStates();
+    setSprkPwr(main_pwr);
 }
 
 void runGPIOTest(){
