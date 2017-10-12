@@ -191,7 +191,11 @@ void loop() {
     wait(10);
     handleButtons();
     handleStates();
-    setSprkPwr(main_pwr);
+    static long last_check = millis();
+    if(millis() - last_check > 1000){
+      setSpkrPwr(main_pwr);
+      last_check = millis();
+    }
 }
 
 void runGPIOTest(){
@@ -250,7 +254,6 @@ void runProjTest(){
 }
 
 bool checkSpeakerState(){
-    long start_time = millis();
     bool speaker_on = false;
     if(!digitalRead(SPKR_SENSE)){   // Sensor active low
         speaker_on = true;
@@ -433,7 +436,7 @@ void checkBtn(int btn_pin){
 }
 
 void setPCPwr(bool pwr_state){
-    // Don't do anything unless chaning state
+    // Don't do anything unless changing state
     if(pc_pwr == pwr_state){
         return;
     }
