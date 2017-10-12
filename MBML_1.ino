@@ -498,9 +498,18 @@ void setMainPwr(bool pwr_state){
             main_off_time = millis();
         }
         setSpkrPwr(pwr_state);
-        setPCPwr(pwr_state);
-        wait(5000);
-        setMonPwr(pwr_state);
+        if(!pwr_state){
+          setPCPwr(pwr_state);
+          wait(6000);
+          setMonPwr(pwr_state);
+        }
+        if(pwr_state){
+          setMonPwr(pwr_state);
+          wait(4000);
+          setPCPwr(pwr_state);
+        }
+        
+        
     }
 }
 
